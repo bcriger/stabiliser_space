@@ -85,20 +85,20 @@ class StabSpace(object):
 
         acom_stabs = [_ for _ in self.stabs if _.com(op)]
         acom_logs = [_ for _ in self.logs if _.com(op)]
-        if not(acom_logs) and not(acom_stabs): #both lists empty
+        if not(acom_stabs):
             stab_mat = np.vstack(
                 [pauli2vec(s, self.qubits) for s in self.stabs]
                 ).T
             try:
-                aug_mat = np.hstack([stab_mat, pauli2vec(op).T])
+                aug_mat = np.hstack([stab_mat, np.matrix(pauli2vec(op, self.qubits)).T])
                 decomp = gf2.solve_augmented(aug_mat)
                 s = prod([a for a, b in zip(self.stabs, decomp) if b])
-                return -1 if (s * op).ph else 0 # UNSAFE
+                return -1 if (s * op).ph else 1 # UNSAFE
             except ValueError: # inconsistent system, we assume
                 # stab_log_mat = np.vstack(
                 # [pauli2vec(s, self.qubits) for s in self.stabs + self.logs]
                 # ).T
-                # aug_mat = np.hstack([stab_log_mat, pauli2vec(op).T])
+                # aug_mat = np.hstack([stab_log_mat, pauli2vec(op, self.qubits).T])
                 # decomp = gf2.solve_augmented(aug_mat)
                 meas_result = 2 * randint(2) - 1
                 # eliminate the proper logicals from self.logs
@@ -111,14 +111,16 @@ class StabSpace(object):
         else:
             acom_p = (acom_stabs + acom_logs)[0]
             for p in acom_logs:
-                self.logs.pop(p)
-                self.logs.append(acom_p * p)
+                self.logs.remove(p)
+                if p != acom_p:
+                    self.logs.append(acom_p * p)
             for p in acom_stabs:
-                self.stabs.pop(p)
-                self.stabs.append(acom_p * p)
-            result = randint(2)
-            self.stabs.append(sp.Pauli(op.x_set, op.z_set, 2 * result))
-            return result 
+                self.stabs.remove(p)
+                if p != acom_p:
+                    self.stabs.append(acom_p * p)
+            meas_result = 2 * randint(2) - 1
+            self.stabs.append(sp.Pauli(op.x_set, op.z_set, meas_result - 1))
+            return meas_result 
 
 
 #------------------------convenience functions------------------------#

@@ -53,7 +53,7 @@ def solve_augmented(C1):
         for b in range(c - 1):
             if D[a, b] != 0:
                 _in = False
-        if _in and (D[a, c] != 0):
+        if _in and (D[a, -1] != 0):
             raise ValueError("Inconsistent system")
 
     ret = zeros(c - 1, dtype=int_)
