@@ -122,6 +122,13 @@ class StabSpace(object):
             self.stabs.append(sp.Pauli(op.x_set, op.z_set, meas_result - 1))
             return meas_result 
 
+    def apply(self, error):
+        """
+        Updates the stabiliser/logicals given a Pauli:
+        """
+        self.stabs = list(map(error, self.stabs))
+        self.logs = list(map(error, self.logs))
+        pass
 
 #------------------------convenience functions------------------------#
 
