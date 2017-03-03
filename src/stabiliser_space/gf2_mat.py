@@ -80,6 +80,9 @@ def inv(A):
     B = AB[:, n:]
     return B
 
+def mul(A, B):
+    return np.dot(A, B) % 2
+
 rand = lambda shp: randint(0, 2, shp)
 
 #---------------------------------------------------------------------#

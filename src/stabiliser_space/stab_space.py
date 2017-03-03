@@ -47,7 +47,6 @@ class StabSpace(object):
         else:
             self.n = n
 
-
     # Gate Methods DON'T GET FANCY
     def cnot(self, ctrl_targs):
         for pauli in self.stabs + self.logs:
@@ -86,11 +85,9 @@ class StabSpace(object):
         acom_stabs = [_ for _ in self.stabs if _.com(op)]
         acom_logs = [_ for _ in self.logs if _.com(op)]
         if not(acom_stabs):
-            stab_mat = np.vstack(
-                [pauli2vec(s, self.qubits) for s in self.stabs]
-                ).T
             try:
-                aug_mat = np.hstack([stab_mat, np.matrix(pauli2vec(op, self.qubits)).T])
+                aug_mat = np.hstack([stab_mat(self.stabs, self.qubits),
+                                        np.matrix(pauli2vec(op, self.qubits)).T])
                 decomp = gf2.solve_augmented(aug_mat)
                 s = prod([a for a, b in zip(self.stabs, decomp) if b])
                 return -1 if (s * op).ph else 1 # UNSAFE
@@ -103,7 +100,7 @@ class StabSpace(object):
                 meas_result = 2 * randint(2) - 1
                 # eliminate the proper logicals from self.logs
                 if len(self.logs) > 2:
-                    raise NotImplementedError("Logical measurements in k>1 codes not supported.")
+                    raise NotImplementedError("Logical measurements in k > 1 codes not supported.")
                 self.logs = []
                 self.stabs.append(meas_result * op)
                 return meas_result
@@ -130,6 +127,29 @@ class StabSpace(object):
         self.logs = list(map(error, self.logs))
         pass
 
+    def express_stabilisers(self, stab_lst):
+        """
+        For book-keeping, ensures that the stabiliser generators are
+        expressed using a set that we decide, rather than whatever 
+        generators are calculated by meas or the like. 
+
+        We accomplish this by writing out the desired old and new
+        stabiliser sets as matrices O and N, then calculating NO^-1.
+        We write out the stabilisers as products over the old
+        stabilisers that correspond to unit elements in NO^-1.
+        """
+        old_mat = stab_mat(self.stabs, self.qubits)
+        nu_stabs = []
+        
+        for stab in stab_lst:
+            aug_mat = np.hstack([old_mat.copy(),
+                                np.matrix(pauli2vec(stab, self.qubits)).T])
+            decomp = gf2.solve_augmented(aug_mat)
+            nu_stabs.append(prod([a for a, b in zip(self.stabs, decomp) if b]))
+        
+        self.stabs = nu_stabs
+        pass
+
 #------------------------convenience functions------------------------#
 
 set2vec = lambda s, bits: np.array([1 if _ in s else 0 for _ in bits])
@@ -143,5 +163,8 @@ def pauli2vec(pauli, qubits):
     """
     return np.hstack([set2vec(pauli.x_set, qubits),
                         set2vec(pauli.z_set, qubits)])
+
+def stab_mat(stabs, qubits):
+    return np.vstack([pauli2vec(s, qubits) for s in stabs]).T
 
 #---------------------------------------------------------------------#
