@@ -1,9 +1,10 @@
-import sparse_pauli as sp
+import ctypes as ct
+from functools import reduce
 import itertools as it
 import numpy as np
 from numpy.random import randint
 from operator import or_ as union, mul
-from functools import reduce
+import sparse_pauli as sp
 from . import gf2_mat as gf2
 
 __all__ = ['StabSpace', 'pauli2vec']
@@ -88,7 +89,8 @@ class StabSpace(object):
             try:
                 aug_mat = np.hstack([stab_mat(self.stabs, self.qubits),
                                         np.matrix(pauli2vec(op, self.qubits)).T])
-                decomp = gf2.solve_augmented(aug_mat)
+                # decomp = gf2.solve_augmented(aug_mat)
+                decomp = c_solve_augmented(aug_mat)
                 s = prod([a for a, b in zip(self.stabs, decomp) if b])
                 return -1 if (s * op).ph else 1 # UNSAFE
             except ValueError: # inconsistent system, we assume
@@ -166,5 +168,27 @@ def pauli2vec(pauli, qubits):
 
 def stab_mat(stabs, qubits):
     return np.vstack([pauli2vec(s, qubits) for s in stabs]).T
+
+gf2_mat = ct.CDLL('./gf2_mat.so')
+
+def c_solve_augmented(mat):
+    """
+    Calls out to a nearby .so file to solve an augmented linear system
+    over GF(2).
+    """
+    rs, cs = map(ct.c_int, np.shape(mat))
+    solution = np.zeros((rs,), dtype=np.int_)
+    mat_arr = np.reshape(mat, [-1])
+
+    mat_arr = (ct.c_int * len(mat_arr))(*mat_arr)
+    rs, cs = ct.c_int(rs), ct.c_int(cs)
+    solution = (ct.c_int * len(solution))(*solution)
+
+    res_int = gf2_mat.solve_augmented(mat_arr, rs, cs, solution)
+    
+    if res_int == 1:
+        raise ValueError("Inconsistent system")
+    
+    return solution
 
 #---------------------------------------------------------------------#

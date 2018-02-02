@@ -46,7 +46,7 @@ def solve_augmented(C1):
     r, c = shape(C1)
     D = C1.copy()
     rref(D)
-    x = 0
+    # x = 0
 
     for a in range(r):
         _in = True
