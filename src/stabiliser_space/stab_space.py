@@ -4,8 +4,9 @@ import itertools as it
 import numpy as np
 from numpy.random import randint
 from operator import or_ as union, mul
+import os
 import sparse_pauli as sp
-from . import gf2_mat as gf2
+# from . import gf2_mat as gf2
 
 __all__ = ['StabSpace', 'pauli2vec']
 
@@ -169,7 +170,11 @@ def pauli2vec(pauli, qubits):
 def stab_mat(stabs, qubits):
     return np.vstack([pauli2vec(s, qubits) for s in stabs]).T
 
-gf2_mat = ct.CDLL('./gf2_mat.so')
+gf2_mat = ct.CDLL(
+                    os.path.dirname(os.path.abspath(__file__)) +
+                    os.path.sep +
+                    'gf2_mat.so'
+                )
 
 def c_solve_augmented(mat):
     """

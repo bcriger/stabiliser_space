@@ -13,7 +13,8 @@ int idx(int r, int c, int cs){
 }
 
 void add_row_to_row(int mat_arr[], int r_add, int r_to, int cs){
-    for (int shift = 0; shift < cs; ++shift)
+    int shift = 0;
+    for (shift = 0; shift < cs; ++shift)
         mat_arr[idx(r_to, shift, cs)] ^= mat_arr[idx(r_add, shift, cs)];
 }
 
@@ -33,7 +34,11 @@ void rref(int mat_arr[], int rs, int cs){
     int s = 0;
     bool cond = false;
     
-    for (int x = 0; x < rs; ++x)
+    int x = 0;
+    int y = 0;
+    int m = 0;
+
+    for (x = 0; x < rs; ++x)
     {
         bool b = false;
         while (!b && (x + s < cs))
@@ -41,7 +46,7 @@ void rref(int mat_arr[], int rs, int cs){
             if (mat_arr[idx(x, x + s, cs)] == 1) break;
             else if (mat_arr[idx(x, x + s, cs)] == 0)
             {
-                for (int y = x; y < rs; ++y)
+                for (y = x; y < rs; ++y)
                 {
                     if (mat_arr[idx(y, x + s, cs)] == 1)
                     {
@@ -53,7 +58,7 @@ void rref(int mat_arr[], int rs, int cs){
             }
             if (!b) s += 1; 
         }
-        for (int m = 0; m < rs; ++m)
+        for (m = 0; m < rs; ++m)
         {
             cond = (x + s < cs) && (m != x) && (mat_arr[idx(m, x + s, cs)] == 1);
             if (cond) add_row_to_row(mat_arr, x, m, cs);
@@ -75,24 +80,31 @@ int solve_augmented(int mat_arr[], int rs, int cs, int solution[]){
     // int x = 0;
 
     int D[rs * cs];
-    for (int elem = 0; elem < rs * cs; ++elem) D[elem] = mat_arr[elem];
+
+    int elem = 0;
+    int a = 0;
+    int b = 0;
+    int p = 0;
+    int n = 0;
+
+    for (elem = 0; elem < rs * cs; ++elem) D[elem] = mat_arr[elem];
     rref(D, rs, cs);
 
-    for (int a = 0; a < rs; ++a)
+    for (a = 0; a < rs; ++a)
     {
         _in = true;
-        for (int b = 0; b < cs - 1; ++b)
+        for (b = 0; b < cs - 1; ++b)
         {
             if(D[idx(a, b, cs)] != 0) _in = false;
         }
         if (_in && (D[idx(a, cs - 1, cs)] != 0)) return 1;
     }
 
-    for (int p = 0; p < rs; ++p)
+    for (p = 0; p < rs; ++p)
     {
         if (D[idx(p, cs - 1, cs)] == 1)
         {
-            for (int n = 0; n < cs - 1; ++n)
+            for (n = 0; n < cs - 1; ++n)
             {
                 if (D[idx(p, n, cs)] == 1)
                 {
