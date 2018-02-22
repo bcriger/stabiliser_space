@@ -181,6 +181,8 @@ def c_solve_augmented(mat):
     Calls out to a nearby .so file to solve an augmented linear system
     over GF(2).
     """
+
+    mat = np.array(mat, dtype=np.int_)
     rs, cs = map(ct.c_int, np.shape(mat))
     solution = np.zeros((rs,), dtype=np.int_)
     mat_arr = np.reshape(mat, [-1])
