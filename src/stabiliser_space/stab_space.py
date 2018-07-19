@@ -3,7 +3,7 @@ from functools import reduce
 import itertools as it
 import numpy as np
 from numpy.random import randint
-from operator import or_ as union, mul
+from operator import or_ as union, mul, add
 import os
 import sparse_pauli as sp
 # from . import gf2_mat as gf2
@@ -39,7 +39,7 @@ class StabSpace(object):
         self.logs = logs
     
         if qubits is None:
-            self.qubits = sorted(list(reduce(union,
+            self.qubits = sorted(list(reduce(add,
                                 [p.support() for p in stabs + logs])))
         else:
             self.qubits = qubits
