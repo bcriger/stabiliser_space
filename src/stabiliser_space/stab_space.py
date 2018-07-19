@@ -147,7 +147,8 @@ class StabSpace(object):
         for stab in stab_lst:
             aug_mat = np.hstack([old_mat.copy(),
                                 np.matrix(pauli2vec(stab, self.qubits)).T])
-            decomp = gf2.solve_augmented(aug_mat)
+            # decomp = gf2.solve_augmented(aug_mat)
+            decomp = c_solve_augmented(aug_mat)
             nu_stabs.append(prod([a for a, b in zip(self.stabs, decomp) if b]))
         
         self.stabs = nu_stabs
