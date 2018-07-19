@@ -15,6 +15,7 @@ config = {
     'author_email': 'bcriger@gmail.com',
     'version': '.'.join(map(str, v)),
     'install_requires': ['nose', 'sparse_pauli'],
+    'package_data': {'': '*.so'},
     'package_dir': {'': 'src'},
     'packages': ['stabiliser_space'],
     'scripts': [],
