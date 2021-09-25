@@ -17,7 +17,7 @@ class StabSpace(object):
     One list is the stabiliser generators, the other is the logical
     generators.
     """
-    def __init__(self, stabs, logs=None, check=True, qubits=None, n=None):
+    def __init__(self, stabs=None, logs=None, check=True, qubits=None, n=None):
     
         if check:
             # type check
@@ -35,12 +35,14 @@ class StabSpace(object):
                     raise ValueError("Input logical anticommutes with "
                                         "stabiliser: "
                                         "\n{}, {}".format(*pr))
-        self.stabs = stabs
-        self.logs = logs
+        
+        self.stabs = stabs if stabs else []
+        self.logs = logs if logs else []
     
         if qubits is None:
             self.qubits = sorted(list(reduce(add,
-                                [p.support() for p in stabs + logs])))
+                                [p.support()
+                                for p in self.stabs + self.logs], [])))
         else:
             self.qubits = qubits
 
@@ -121,6 +123,18 @@ class StabSpace(object):
             meas_result = 2 * randint(2) - 1
             self.stabs.append(sp.Pauli(op.x_set, op.z_set, meas_result - 1))
             return meas_result 
+
+    def prep(self, op):
+        """
+        Temporary method that errors out if you put in a prep that
+        shares support with an existing 
+        """
+        temp_result = self.meas(op)
+        if temp_result == -1:
+            for dx in range(len(self.stabs)):
+                if op.__eq__(self.stabs[dx], sign=False):
+                    self.stabs[dx] = -op
+
 
     def apply(self, error):
         """
