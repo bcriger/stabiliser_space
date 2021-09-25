@@ -17,7 +17,7 @@ class StabSpace(object):
     One list is the stabiliser generators, the other is the logical
     generators.
     """
-    def __init__(self, stabs=None, logs=None, check=True, qubits=None, n=None):
+    def __init__(self, stabs=None, logs=None, check=True):
     
         if check:
             # type check
@@ -38,18 +38,16 @@ class StabSpace(object):
         
         self.stabs = stabs if stabs else []
         self.logs = logs if logs else []
-    
-        if qubits is None:
-            self.qubits = sorted(list(reduce(add,
-                                [p.support()
-                                for p in self.stabs + self.logs], [])))
-        else:
-            self.qubits = qubits
 
-        if n is None:
-            self.n = len(self.qubits)
-        else:
-            self.n = n
+    @property
+    def qubits(self):
+        # TODO FIX SLOW
+        return sorted(list(reduce(add, 
+                [p.support() for p in self.stabs + self.logs], [])))
+    
+    @property
+    def n(self):
+        return len(self.qubits)
 
     # Gate Methods DON'T GET FANCY
     def cnot(self, ctrl_targs):
@@ -88,10 +86,12 @@ class StabSpace(object):
 
         acom_stabs = [_ for _ in self.stabs if _.com(op)]
         acom_logs = [_ for _ in self.logs if _.com(op)]
-        if not(acom_stabs):
+        
+        if not(self.stabs) and not(self.logs):
+            self.stabs.append(op)
+        elif not(acom_stabs):
             try:
-                aug_mat = np.hstack([stab_mat(self.stabs, self.qubits),
-                                        np.matrix(pauli2vec(op, self.qubits)).T])
+                aug_mat = self._augmented_matrix(op)
                 # decomp = gf2.solve_augmented(aug_mat)
                 decomp = c_solve_augmented(aug_mat)
                 s = prod([a for a, b in zip(self.stabs, decomp) if b])
@@ -125,16 +125,15 @@ class StabSpace(object):
             return meas_result 
 
     def prep(self, op):
-        """
-        Temporary method that errors out if you put in a prep that
-        shares support with an existing 
-        """
         temp_result = self.meas(op)
         if temp_result == -1:
             for dx in range(len(self.stabs)):
                 if op.__eq__(self.stabs[dx], sign=False):
-                    self.stabs[dx] = -op
+                    self.stabs[dx] = op
 
+    def _augmented_matrix(self, op):
+        return np.hstack([stab_mat(self.stabs, self.qubits),
+                            np.matrix(pauli2vec(op, self.qubits)).T])
 
     def apply(self, error):
         """
@@ -198,7 +197,7 @@ def c_solve_augmented(mat):
     """
 
     mat = np.array(mat, dtype=np.int_)
-    rs, cs = map(ct.c_int, np.shape(mat))
+    rs, cs = np.shape(mat)
     solution = np.zeros((rs,), dtype=np.int_)
     mat_arr = np.reshape(mat, [-1])
 
