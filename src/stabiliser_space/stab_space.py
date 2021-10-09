@@ -8,7 +8,7 @@ import os
 import sparse_pauli as sp
 # from . import gf2_mat as gf2
 
-__all__ = ['StabSpace', 'pauli2vec']
+__all__ = ['StabSpace', 'pauli2vec', '_c_solve_augmented']
 
 class StabSpace(object):
     """
@@ -93,7 +93,7 @@ class StabSpace(object):
             try:
                 aug_mat = self._augmented_matrix(op)
                 # decomp = gf2.solve_augmented(aug_mat)
-                decomp = c_solve_augmented(aug_mat)
+                decomp = _c_solve_augmented(aug_mat)
                 s = prod([a for a, b in zip(self.stabs, decomp) if b])
                 return -1 if (s * op).ph else 1 # UNSAFE
             except ValueError: # inconsistent system, we assume
@@ -161,7 +161,7 @@ class StabSpace(object):
             aug_mat = np.hstack([old_mat.copy(),
                                 np.matrix(pauli2vec(stab, self.qubits)).T])
             # decomp = gf2.solve_augmented(aug_mat)
-            decomp = c_solve_augmented(aug_mat)
+            decomp = _c_solve_augmented(aug_mat)
             nu_stabs.append(prod([a for a, b in zip(self.stabs, decomp) if b]))
         
         self.stabs = nu_stabs
@@ -190,7 +190,7 @@ gf2_mat = ct.CDLL(
                     'gf2_mat.so'
                 )
 
-def c_solve_augmented(mat):
+def _c_solve_augmented(mat):
     """
     Calls out to a nearby .so file to solve an augmented linear system
     over GF(2).
