@@ -95,8 +95,10 @@ class StabSpace(object):
                 # decomp = gf2.solve_augmented(aug_mat)
                 decomp = _c_solve_augmented(aug_mat)
                 s = prod([a for a, b in zip(self.stabs, decomp) if b])
-                return -1 if (s * op).ph else 1 # UNSAFE
-            except ValueError: # inconsistent system, we assume
+                comparison = s * op
+                assert comparison.weight() == 0
+                return -1 if comparison.ph else 1 # UNSAFE
+            except: # inconsistent system, we assume
                 # stab_log_mat = np.vstack(
                 # [pauli2vec(s, self.qubits) for s in self.stabs + self.logs]
                 # ).T
